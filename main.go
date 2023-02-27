@@ -1,7 +1,7 @@
 package main
 
 import (
-	"./core/app"
+	"github.com/jmcanterafonseca-iota/inx-my/core/app"
 )
 
 func main() {
