@@ -1,0 +1,7 @@
+{
+    "inx": {
+        "address": "52.213.240.168:9029",
+        "maxConnectionAttempts": 30,
+        "targetNetworkName": ""
+    }
+}

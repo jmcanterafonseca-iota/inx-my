@@ -5,8 +5,7 @@ import (
 	"github.com/iotaledger/hive.go/core/app/core/shutdown"
 	"github.com/iotaledger/hive.go/core/app/plugins/profiling"
 	"github.com/iotaledger/inx-app/core/inx"
-	"github.com/iotaledger/inx-spammer/core/spammer"
-	"github.com/iotaledger/inx-spammer/plugins/prometheus"
+	"github.com/jmcanterafonseca-iota/inx-my/core/my"
 )
 
 var (
@@ -22,12 +21,11 @@ func App() *app.App {
 		app.WithInitComponent(InitComponent),
 		app.WithCoreComponents([]*app.CoreComponent{
 			inx.CoreComponent,
-			spammer.CoreComponent,
+			my.CoreComponent,
 			shutdown.CoreComponent,
 		}...),
 		app.WithPlugins([]*app.Plugin{
 			profiling.Plugin,
-			prometheus.Plugin,
 		}...),
 	)
 }
