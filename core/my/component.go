@@ -2,7 +2,10 @@ package my
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -11,10 +14,10 @@ import (
 	"github.com/iotaledger/hive.go/core/app"
 	"github.com/iotaledger/inx-app/pkg/httpserver"
 	"github.com/iotaledger/inx-app/pkg/nodebridge"
-	"github.com/jmcanterafonseca-iota/inx-my/pkg/daemon"
 	inx "github.com/iotaledger/inx/go"
 	iotago "github.com/iotaledger/iota.go/v3"
 	"github.com/iotaledger/iota.go/v3/keymanager"
+	"github.com/jmcanterafonseca-iota/inx-my/pkg/daemon"
 )
 
 func init() {
@@ -77,7 +80,8 @@ func run() error {
 
 		CoreComponent.LogInfo("Starting API server ...")
 
-		setupRoutes(e)
+		setupRoutes(e, deps.NodeBridge)
+
 		go func() {
 			CoreComponent.LogInfof("You can now access the API using: http://%s", ParamsRestAPI.BindAddress)
 			if err := e.Start(ParamsRestAPI.BindAddress); err != nil && !errors.Is(err, http.ErrServerClosed) {
@@ -141,4 +145,20 @@ func FetchMilestoneCone(ctx context.Context, index uint32) (iotago.BlockIDs, err
 	CoreComponent.LogDebugf("Milestone %d contained %d blocks\n", index, len(blockIDs))
 
 	return blockIDs, nil
+}
+
+// loads Mnemonic phrases from the given environment variable.
+func loadMnemonicFromEnvironment(name string) ([]string, error) {
+	keys, exists := os.LookupEnv(name)
+	if !exists {
+		return nil, fmt.Errorf("environment variable '%s' not set", name)
+	}
+
+	if len(keys) == 0 {
+		return nil, fmt.Errorf("environment variable '%s' not set", name)
+	}
+
+	phrases := strings.Split(keys, " ")
+
+	return phrases, nil
 }

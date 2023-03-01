@@ -1,18 +1,24 @@
 package my
 
 import (
-	"strings"
-
 	"github.com/labstack/echo/v4"
+
+	"github.com/iotaledger/inx-app/pkg/nodebridge"
 
 	// import implementation.
 	_ "golang.org/x/crypto/blake2b"
+
 )
 
-func createProof(c echo.Context) (*MessageResponse, error) {
-	var builder strings.Builder
+func createProof(c echo.Context, nodeBridge *nodebridge.NodeBridge) (*MessageResponse, error) {
+	CoreComponent.LogDebug("Create Proof Function")
 
-	builder.WriteString("Hello World")
+	blockId, err := createTaggedDataBlock(nodeBridge)
+
+	if (err != nil) {
+		CoreComponent.LogErrorf("Error creating block: %w", err)
+		return nil, err
+	}
 	
-	return &MessageResponse{Message: builder.String()}, nil
+	return &MessageResponse{Message: blockId.String()}, nil
 }
