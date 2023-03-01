@@ -1,5 +1,6 @@
 package my
 
+/*
 import (
 	"fmt"
 	"time"
@@ -64,3 +65,4 @@ func mintAliasOutput(nodeBridge *nodebridge.NodeBridge) (iotago.AliasID, error) 
 
 	return blockId, nil
 }
+*/

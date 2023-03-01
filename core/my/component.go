@@ -14,16 +14,18 @@ import (
 	"github.com/iotaledger/hive.go/core/app"
 	"github.com/iotaledger/inx-app/pkg/httpserver"
 	"github.com/iotaledger/inx-app/pkg/nodebridge"
-	inx "github.com/iotaledger/inx/go"
-	iotago "github.com/iotaledger/iota.go/v3"
-	"github.com/iotaledger/iota.go/v3/keymanager"
+	"github.com/iotaledger/iota.go/v3/nodeclient"
 	"github.com/jmcanterafonseca-iota/inx-my/pkg/daemon"
+	"github.com/jmcanterafonseca-iota/inx-my/pkg/hdwallet"
+	"github.com/jmcanterafonseca-iota/inx-my/pkg/ledger"
 )
+
+const indexerPluginAvailableTimeout = 30 * time.Second
 
 func init() {
 	CoreComponent = &app.CoreComponent{
 		Component: &app.Component{
-			Name:     "POI",
+			Name:     "MY",
 			Params:   params,
 			DepsFunc: func(cDeps dependencies) { deps = cDeps },
 			Provide:  provide,
@@ -39,36 +41,51 @@ var (
 
 type dependencies struct {
 	dig.In
-	NodeBridge              *nodebridge.NodeBridge
-	KeyManager              *keymanager.KeyManager
-	MilestonePublicKeyCount int `name:"milestonePublicKeyCount"`
+	NodeBridge    *nodebridge.NodeBridge
+	LedgerService *ledger.LedgerService
 }
 
 func provide(c *dig.Container) error {
-
-	type inDeps struct {
+	type ledgerServiceDeps struct {
 		dig.In
-		NodeBridge *nodebridge.NodeBridge
+		NodeBridge      *nodebridge.NodeBridge
 	}
 
-	type outDeps struct {
-		dig.Out
-		KeyManager              *keymanager.KeyManager
-		MilestonePublicKeyCount int `name:"milestonePublicKeyCount"`
+	if err := c.Provide(func(deps ledgerServiceDeps) (*ledger.LedgerService, error) {
+		CoreComponent.LogInfo("Setting up Ledger Service ...")
+
+		var wallet *hdwallet.HDWallet
+		var indexer nodeclient.IndexerClient
+		mnemonic, err := loadMnemonicFromEnvironment("INX_MNEMONIC")
+		if err != nil {
+			CoreComponent.LogErrorfAndExit("mnemonic seed discovery failed, err: %s", err)
+		}
+
+		if len(mnemonic) == 0 {
+			CoreComponent.LogErrorfAndExit("mnemonic is empty")
+		}
+
+		// new HDWallet instance for address derivation
+		wallet, err = hdwallet.NewHDWallet(deps.NodeBridge.ProtocolParameters(), mnemonic, "", 0, false)
+		if err != nil {
+			return nil, err
+		}
+
+		ctxIndexer, cancelIndexer := context.WithTimeout(CoreComponent.Daemon().ContextStopped(), indexerPluginAvailableTimeout)
+		defer cancelIndexer()
+
+		indexer, err = deps.NodeBridge.Indexer(ctxIndexer)
+		if err != nil {
+			return nil, err
+		}
+
+		return ledger.New(wallet, deps.NodeBridge, &indexer, CoreComponent.Logger()), nil
+
+	}); err != nil {
+		return err
 	}
 
-	return c.Provide(func(deps inDeps) outDeps {
-		keyManager := keymanager.New()
-		for _, keyRange := range deps.NodeBridge.NodeConfig.GetMilestoneKeyRanges() {
-			keyManager.AddKeyRange(keyRange.GetPublicKey(), keyRange.GetStartIndex(), keyRange.GetEndIndex())
-		}
-
-		return outDeps{
-			KeyManager:              keyManager,
-			MilestonePublicKeyCount: int(deps.NodeBridge.NodeConfig.GetMilestonePublicKeyCount()),
-		}
-	})
-
+	return nil
 }
 
 func run() error {
@@ -80,7 +97,7 @@ func run() error {
 
 		CoreComponent.LogInfo("Starting API server ...")
 
-		setupRoutes(e, deps.NodeBridge)
+		setupRoutes(e, deps.LedgerService)
 
 		go func() {
 			CoreComponent.LogInfof("You can now access the API using: http://%s", ParamsRestAPI.BindAddress)
@@ -127,24 +144,6 @@ func run() error {
 	}
 
 	return nil
-}
-
-func FetchMilestoneCone(ctx context.Context, index uint32) (iotago.BlockIDs, error) {
-	CoreComponent.LogDebugf("Fetch cone of milestone %d\n", index)
-
-	fetchContext, cancel := context.WithCancel(ctx)
-	defer cancel()
-
-	var blockIDs iotago.BlockIDs
-	if err := deps.NodeBridge.MilestoneConeMetadata(fetchContext, cancel, index, func(metadata *inx.BlockMetadata) {
-		blockIDs = append(blockIDs, metadata.UnwrapBlockID())
-	}); err != nil {
-		return nil, err
-	}
-
-	CoreComponent.LogDebugf("Milestone %d contained %d blocks\n", index, len(blockIDs))
-
-	return blockIDs, nil
 }
 
 // loads Mnemonic phrases from the given environment variable.

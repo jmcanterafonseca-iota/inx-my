@@ -55,7 +55,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/iancoleman/orderedmap v0.2.0 // indirect
-	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1 // indirect
+	github.com/iotaledger/hive.go/serializer/v2 v2.0.0-rc.1
 	github.com/iotaledger/inx-app v1.0.0-rc.3
 	github.com/knadh/koanf v1.5.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
@@ -73,6 +73,7 @@ require (
 	github.com/spf13/cast v1.5.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/tcnksm/go-latest v0.0.0-20170313132115-e3007ae9052e // indirect
+	github.com/wollac/iota-crypto-demo v0.0.0-20221117162917-b10619eccb98
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/dig v1.16.1
 	go.uber.org/multierr v1.9.0 // indirect

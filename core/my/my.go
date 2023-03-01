@@ -1,19 +1,17 @@
 package my
 
 import (
+	"github.com/jmcanterafonseca-iota/inx-my/pkg/ledger"
 	"github.com/labstack/echo/v4"
-
-	"github.com/iotaledger/inx-app/pkg/nodebridge"
 
 	// import implementation.
 	_ "golang.org/x/crypto/blake2b"
-
 )
 
-func createProof(c echo.Context, nodeBridge *nodebridge.NodeBridge) (*MessageResponse, error) {
+func createProof(c echo.Context, ledgerService *ledger.LedgerService) (*MessageResponse, error) {
 	CoreComponent.LogDebug("Create Proof Function")
 
-	blockId, err := createTaggedDataBlock(nodeBridge)
+	blockId, err := ledgerService.AddTaggedData(CoreComponent.Daemon().ContextStopped())
 
 	if (err != nil) {
 		CoreComponent.LogErrorf("Error creating block: %w", err)
