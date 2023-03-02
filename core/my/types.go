@@ -15,8 +15,8 @@ type ValidateProofResponse struct {
 	Valid bool `json:"valid"`
 }
 
-type MessageResponse struct {
-	Message string `json:"message"`
+type AuditTrailCreateResponse struct {
+	AuditTrailID string `json:"auditTrailID"`
 }
 
 type AuditTrailCreateRequest struct {
@@ -25,8 +25,4 @@ type AuditTrailCreateRequest struct {
 
 type AuditTrailReadResponse struct {
 	Data string `json:"data"`
-}
-
-type AuditTrailReadRequest struct {
-	AuditTrailID string
 }

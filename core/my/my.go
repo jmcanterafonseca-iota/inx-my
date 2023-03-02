@@ -9,17 +9,17 @@ import (
 	_ "golang.org/x/crypto/blake2b"
 )
 
-func createAuditTrail(c echo.Context, ledgerService *ledger.LedgerService, data string) (*MessageResponse, error) {
+func createAuditTrail(c echo.Context, ledgerService *ledger.LedgerService, data string) (*AuditTrailCreateResponse, error) {
 	CoreComponent.LogDebug("Create Audit Trail Function")
 
-	blockId, err := ledgerService.MintAlias(CoreComponent.Daemon().ContextStopped(), data)
+	aliasID, err := ledgerService.MintAlias(CoreComponent.Daemon().ContextStopped(), data)
 
 	if (err != nil) {
 		CoreComponent.LogErrorf("Error creating Audit Trail: %w", err)
 		return nil, err
 	}
 	
-	return &MessageResponse{Message: blockId.String()}, nil
+	return &AuditTrailCreateResponse{AuditTrailID: aliasID.String()}, nil
 }
 
 func readAuditTrail(c echo.Context, ledgerService *ledger.LedgerService, aliasID *iotago.AliasID) (*AuditTrailReadResponse, error) {
