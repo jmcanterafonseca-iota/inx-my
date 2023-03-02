@@ -43,7 +43,7 @@ func New(wallet *hdwallet.HDWallet,
 	}
 }
 
-func (l *LedgerService) MintAlias(context context.Context) (iotago.BlockID, error) {
+func (l *LedgerService) MintAlias(context context.Context, data string) (iotago.BlockID, error) {
 	var outputToConsume *UTXO
 
 	// Go to the indexer and obtain the first Basic Output that has funds
@@ -84,7 +84,7 @@ func (l *LedgerService) MintAlias(context context.Context) (iotago.BlockID, erro
 		ImmutableFeatures: iotago.Features{
 			&iotago.IssuerFeature{Address: ed25519Addr},
 		},
-		StateMetadata: []byte("Hello alias!"),
+		StateMetadata: []byte(data),
 	}
 
 	outputCost := l.nodeBridge.ProtocolParameters().RentStructure.MinRent(targetAliasOutput)
@@ -140,6 +140,17 @@ func (l *LedgerService) MintAlias(context context.Context) (iotago.BlockID, erro
 	}
 
 	return blockId, nil
+}
+
+func (l *LedgerService) ReadAlias (ctx context.Context, aliasID *iotago.AliasID) (*iotago.AliasOutput, error) {
+	_, aliasOutput, err := l.indexerClient.Alias(ctx, *aliasID)
+
+	if err != nil {
+		l.log.Errorf("Error while calling indexer %w", err)
+		return &iotago.AliasOutput{}, err
+	}
+
+	return aliasOutput, nil;
 }
 
 func (l *LedgerService) queryIndexer(ctx context.Context, query nodeclient.IndexerQuery, maxResults ...int) ([]*UTXO, error) {

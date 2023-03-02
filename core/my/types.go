@@ -18,3 +18,15 @@ type ValidateProofResponse struct {
 type MessageResponse struct {
 	Message string `json:"message"`
 }
+
+type AuditTrailCreateRequest struct {
+	Data string `json:"data"`
+}
+
+type AuditTrailReadResponse struct {
+	Data string `json:"data"`
+}
+
+type AuditTrailReadRequest struct {
+	AuditTrailID string
+}
