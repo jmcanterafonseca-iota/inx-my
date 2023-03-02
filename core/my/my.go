@@ -11,7 +11,7 @@ import (
 func createProof(c echo.Context, ledgerService *ledger.LedgerService) (*MessageResponse, error) {
 	CoreComponent.LogDebug("Create Proof Function")
 
-	blockId, err := ledgerService.AddTaggedData(CoreComponent.Daemon().ContextStopped())
+	blockId, err := ledgerService.MintAlias(CoreComponent.Daemon().ContextStopped())
 
 	if (err != nil) {
 		CoreComponent.LogErrorf("Error creating block: %w", err)

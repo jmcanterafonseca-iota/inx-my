@@ -79,7 +79,7 @@ func provide(c *dig.Container) error {
 			return nil, err
 		}
 
-		return ledger.New(wallet, deps.NodeBridge, &indexer, CoreComponent.Logger()), nil
+		return ledger.New(wallet, deps.NodeBridge, indexer, CoreComponent.Logger()), nil
 
 	}); err != nil {
 		return err
