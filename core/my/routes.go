@@ -2,6 +2,7 @@ package my
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/jmcanterafonseca-iota/inx-my/pkg/ledger"
 	"github.com/labstack/echo/v4"
@@ -16,7 +17,7 @@ const (
 	APIRoute = "my/v1"
 
 	// ParameterBlockID is used to identify a block by its ID.
-	ParameterAuditTrailID = "auditTrailID"
+	ParameterAuditTrailID = "AuditTrailID"
 
 	RouteReadAuditTrail   = "/audit-trails/:" + ParameterAuditTrailID
 	RouteCreateAuditTrail = "/audit-trails"
@@ -25,24 +26,13 @@ const (
 func setupRoutes(e *echo.Echo, ledgerService *ledger.LedgerService) {
 
 	e.GET(RouteReadAuditTrail, func(c echo.Context) error {
-		req := &AuditTrailReadRequest{}
+		aliasID, err := parseAuditTrailIDParam(c, ParameterAuditTrailID)
 
-		if err := c.Bind(req); err != nil {
-			return errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid request, error: %s", err)
-		}
-
-		CoreComponent.LogDebugf("Audit Trail ID %s", req.AuditTrailID)
-
-		aliasID, err := iotago.DecodeHex(req.AuditTrailID)
 		if err != nil {
-			return errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid Audit Trail ID, error: %s", err)
+			return err
 		}
 
-		if len(aliasID) != iotago.AliasIDLength {
-			return errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid Audit Trail ID")
-		}
-
-		resp, err := readAuditTrail(c, ledgerService, (*iotago.AliasID)(aliasID))
+		resp, err := readAuditTrail(c, ledgerService, &aliasID)
 
 		if err != nil {
 			return err
@@ -54,7 +44,6 @@ func setupRoutes(e *echo.Echo, ledgerService *ledger.LedgerService) {
 
 	e.POST(RouteCreateAuditTrail, func(c echo.Context) error {
 		req := &AuditTrailCreateRequest{}
-
 		if err := c.Bind(req); err != nil {
 			return errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid request, error: %s", err)
 		}
@@ -66,4 +55,26 @@ func setupRoutes(e *echo.Echo, ledgerService *ledger.LedgerService) {
 
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
+}
+
+func parseAuditTrailIDParam(c echo.Context, paramName string) (iotago.AliasID, error) {
+	auditTrailIDHex := strings.ToLower(c.Param(paramName))
+
+	CoreComponent.LogDebugf("Audit Trail ID %s", auditTrailIDHex)
+
+	aliasIDBytes, err := iotago.DecodeHex(auditTrailIDHex)
+	if err != nil {
+		return iotago.AliasID{}, errors.WithMessagef(httpserver.ErrInvalidParameter, 
+			"invalid Trail ID: %s, error: %s", auditTrailIDHex, err)
+	}
+
+	if len(aliasIDBytes) < iotago.AliasIDLength {
+		return iotago.AliasID{}, errors.WithMessagef(httpserver.ErrInvalidParameter, 
+			"invalid Trail ID: %s", auditTrailIDHex)
+	}
+
+	var aliasID iotago.AliasID
+	copy(aliasID[:], aliasIDBytes)
+
+	return aliasID, nil
 }

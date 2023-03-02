@@ -43,14 +43,14 @@ func New(wallet *hdwallet.HDWallet,
 	}
 }
 
-func (l *LedgerService) MintAlias(context context.Context, data string) (iotago.BlockID, error) {
+func (l *LedgerService) MintAlias(context context.Context, data string) (iotago.AliasID, error) {
 	var outputToConsume *UTXO
 
 	// Go to the indexer and obtain the first Basic Output that has funds
 	ed25519Addr, err := l.wallet.Ed25519AddressFromIndex(0)
 	if err != nil {
 		l.log.Errorf("Error while obtaining address %w", err)
-		return iotago.EmptyBlockID(), err
+		return iotago.AliasID{}, err
 	}
 
 	bech32Addr := ed25519Addr.Bech32(l.nodeBridge.ProtocolParameters().Bech32HRP)
@@ -60,7 +60,7 @@ func (l *LedgerService) MintAlias(context context.Context, data string) (iotago.
 
 	if err != nil {
 		l.log.Errorf("Error while calling indexer %w", err)
-		return iotago.EmptyBlockID(), err
+		return iotago.AliasID{}, err
 	}
 
 	// Only first output is taken
@@ -94,7 +94,7 @@ func (l *LedgerService) MintAlias(context context.Context, data string) (iotago.
 	_, signer, err := l.wallet.Ed25519AddressAndSigner(0)
 	if err != nil {
 		l.log.Errorf("Error while obtaining signer %w", err)
-		return iotago.EmptyBlockID(), err
+		return iotago.AliasID{}, err
 	}
 
 	basicOutputRemainder := &iotago.BasicOutput{
@@ -107,16 +107,16 @@ func (l *LedgerService) MintAlias(context context.Context, data string) (iotago.
 	transaction, err := builder.NewTransactionBuilder(l.nodeBridge.ProtocolParameters().NetworkID()).
 		AddInput(input).AddOutput(targetAliasOutput).AddOutput(basicOutputRemainder).
 		Build(l.nodeBridge.ProtocolParameters(), signer)
-	
+
 	if err != nil {
 		l.log.Errorf("Error while preparing transaction: %w", err)
-		return iotago.EmptyBlockID(), err
+		return iotago.AliasID{}, err
 	}
 
 	tips, err := l.nodeBridge.RequestTips(context, 4, true)
 	if err != nil {
 		l.log.Errorf("Error while getting tips: %w", err)
-		return iotago.EmptyBlockID(), err
+		return iotago.AliasID{}, err
 	}
 
 	block, err := builder.
@@ -136,13 +136,22 @@ func (l *LedgerService) MintAlias(context context.Context, data string) (iotago.
 	blockId, err := l.nodeBridge.SubmitBlock(context, block)
 
 	if err != nil {
-		return iotago.EmptyBlockID(), fmt.Errorf("build block failed, error: %w", err)
+		return iotago.AliasID{}, fmt.Errorf("build block failed, error: %w", err)
 	}
 
-	return blockId, nil
+	l.log.Debugf("Submitted Block ID %s", blockId.String())
+
+	txId, err := transaction.ID()
+	if err != nil {
+		l.log.Errorf("Error while generating tx ID: %w", err)
+		return iotago.AliasID{}, err
+	}
+
+	outputID := iotago.OutputIDFromTransactionIDAndIndex(txId, 0)
+	return iotago.AliasIDFromOutputID(outputID), nil
 }
 
-func (l *LedgerService) ReadAlias (ctx context.Context, aliasID *iotago.AliasID) (*iotago.AliasOutput, error) {
+func (l *LedgerService) ReadAlias(ctx context.Context, aliasID *iotago.AliasID) (*iotago.AliasOutput, error) {
 	_, aliasOutput, err := l.indexerClient.Alias(ctx, *aliasID)
 
 	if err != nil {
@@ -150,7 +159,7 @@ func (l *LedgerService) ReadAlias (ctx context.Context, aliasID *iotago.AliasID)
 		return &iotago.AliasOutput{}, err
 	}
 
-	return aliasOutput, nil;
+	return aliasOutput, nil
 }
 
 func (l *LedgerService) queryIndexer(ctx context.Context, query nodeclient.IndexerQuery, maxResults ...int) ([]*UTXO, error) {
