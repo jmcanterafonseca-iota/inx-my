@@ -112,3 +112,11 @@ func parseDIDDocument(doc *map[string]any, did string) {
 		}
 	}
 }
+
+func validateDIDDocument(doc *map[string]any) {
+	
+}
+
+func writeDIDDocument(doc *map[string]any) {
+
+}
