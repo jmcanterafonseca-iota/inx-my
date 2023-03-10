@@ -43,6 +43,10 @@ func New(wallet *hdwallet.HDWallet,
 	}
 }
 
+func (l* LedgerService) Bech32HRP() (iotago.NetworkPrefix) {
+	return l.nodeBridge.ProtocolParameters().Bech32HRP
+}
+
 func (l *LedgerService) MintAlias(context context.Context, data string) (iotago.AliasID, error) {
 	var outputToConsume *UTXO
 

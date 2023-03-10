@@ -19,7 +19,7 @@ RUN go mod download
 RUN go mod verify
 
 # Build the binary
-RUN go build -o /app/inx-poi -a
+RUN go build -o /app/inx-my -a
 
 # Copy the assets
 COPY ./config_defaults.json /app/config.json
@@ -37,4 +37,4 @@ COPY --chown=nonroot:nonroot --from=build /app /app
 WORKDIR /app
 USER nonroot
 
-ENTRYPOINT ["/app/inx-poi"]
+ENTRYPOINT ["/app/inx-my"]

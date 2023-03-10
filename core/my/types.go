@@ -26,3 +26,5 @@ type AuditTrailCreateRequest struct {
 type AuditTrailReadResponse struct {
 	Data string `json:"data"`
 }
+
+type IdentityReadResponse map[string]any
