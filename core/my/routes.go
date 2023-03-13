@@ -86,12 +86,14 @@ func setupRoutes(e *echo.Echo, ledgerService *ledger.LedgerService) {
 			return errors.WithMessage(httpserver.ErrInvalidParameter, "invalid request, no DID Doc provided")
 		}
 
-		resp, err := createIdentity(c, ledgerService, req.Doc)
+		did, err := createIdentity(c, ledgerService, req.Doc)
 		if err != nil {
 			return err
 		}
 
-		return httpserver.JSONResponse(c, http.StatusOK, resp)
+		resp := &IdentityCreateResponse{ Id: did }
+
+		return httpserver.JSONResponse(c, http.StatusCreated, resp)
 	})
 }
 

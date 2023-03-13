@@ -1,0 +1,118 @@
+{
+    "$id": "https://iotaledger.github.io/ebsi/did-document-schema.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "definitions": {
+        "uri": {
+            "type": "string",
+            "format": "uri"
+        },
+        "nonEmptyString": {
+            "type": "string",
+            "minLength": 1
+        },
+        "signature": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "number"
+                },
+                "publicKey": {
+                    "$ref": "#/definitions/nonEmptyString"
+                },
+                "signature": {
+                    "$ref": "#/definitions/nonEmptyString"
+                }
+            },
+            "required": [
+                "type",
+                "publicKey",
+                "signature"
+            ]
+        },
+        "did-Creation-Request": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "DIDCreationRequest"
+                    ]
+                },
+                "doc": {
+                    "type": "object"
+                },
+                "metadata": {
+                    "type": "object",
+                    "properties": {
+                        "stateControllerAddress": {
+                            "$ref": "#/definitions/nonEmptyString"
+                        }
+                    }
+                }
+            },
+            "required": [
+                "doc"
+            ]
+        },
+        "did-Transaction-Request": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "DIDTransactionRequest"
+                    ]
+                },
+                "doc": {
+                    "type": "object"
+                },
+                "metadata": {
+                    "type": "object",
+                    "properties": {
+                        "fundingAddress": {
+                            "$ref": "#/definitions/nonEmptyString"
+                        },
+                        "stateControllerAddress": {
+                            "$ref": "#/definitions/nonEmptyString"
+                        }
+                    },
+                    "required": [
+                        "fundingAddress"
+                    ]
+                }
+            },
+            "required": [
+                "doc",
+                "metadata"
+            ]
+        },
+        "did-Transaction-Signature": {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "DIDTransactionSignature"
+                    ]
+                },
+                "doc": {
+                    "type": "object"
+                },
+                "metadata": {
+                    "type": "object",
+                    "properties": {
+                        "txEssenceHash": {
+                            "$ref": "#/definitions/nonEmptyString"
+                        },
+                        "signature": {
+                            "$ref": "#/definitions/signature"
+                        }
+                    }
+                }
+            },
+            "required": [
+                "metadata"
+            ]
+        }
+    }
+}

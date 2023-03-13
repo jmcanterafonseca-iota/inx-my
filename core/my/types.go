@@ -31,4 +31,8 @@ type IdentityCreateRequest struct {
 	Doc interface{} `json:"doc"`
 }
 
+type IdentityCreateResponse struct {
+	Id interface{} `json:"id"`
+}
+
 type IdentityReadResponse map[string]any
