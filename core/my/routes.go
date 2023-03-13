@@ -1,6 +1,7 @@
 package my
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
@@ -12,6 +13,9 @@ import (
 
 	"github.com/iotaledger/inx-app/pkg/httpserver"
 	iotago "github.com/iotaledger/iota.go/v3"
+
+	jsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+	_ "github.com/santhosh-tekuri/jsonschema/v5/httploader"
 )
 
 const (
@@ -78,10 +82,31 @@ func setupRoutes(e *echo.Echo, ledgerService *ledger.LedgerService) {
 	e.POST(RouteCreateIdentity, func(c echo.Context) error {
 		req := &IdentityCreateRequest{}
 
+		// Now functional processing of the request
 		if err := c.Bind(req); err != nil {
 			return errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid request, error: %s", err)
 		}
 
+		data, err := json.Marshal(req)
+		if err != nil {
+			return err
+		}
+		payload := make(map[string]any)
+		err = json.Unmarshal(data, &payload)
+		if err != nil {
+			CoreComponent.Logger().Errorf("Error unmarshalling %w", err)
+			return err
+		}
+		const schemaURL = "https://raw.githubusercontent.com/jmcanterafonseca-iota/inx-my/main/core/schema/identity-inx-schema.json"
+		schema, err := jsonschema.Compile(schemaURL)
+		if err != nil {
+			return err
+		}
+		if err := schema.Validate(payload); err != nil {
+			return errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid request, validation error: %s", err)
+		}
+		
+		/*
 		if req.Type != "DIDCreateRequest" {
 			return errors.WithMessage(httpserver.ErrInvalidParameter, "invalid request type")
 		}
@@ -89,19 +114,16 @@ func setupRoutes(e *echo.Echo, ledgerService *ledger.LedgerService) {
 		if req.Doc == nil {
 			return errors.WithMessage(httpserver.ErrInvalidParameter, "invalid request, no DID Doc provided")
 		}
+		*/
 
-		stateController := req.Metadata.(map[string]any)["stateControllerAddress"]
-		var stateControllerParam string
-		if stateController != nil {
-			stateControllerParam = stateController.(string)
-		}
+		stateController := req.Metadata.stateControllerAddress
 
-		did, err := createIdentity(c, ledgerService, req.Doc, stateControllerParam)
+		did, err := createIdentity(c, ledgerService, req.Doc, stateController)
 		if err != nil {
 			return err
 		}
 
-		resp := &IdentityCreateResponse{ Id: did }
+		resp := &IdentityCreateResponse{Id: did}
 
 		return httpserver.JSONResponse(c, http.StatusCreated, resp)
 	})

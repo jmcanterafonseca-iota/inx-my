@@ -15,6 +15,8 @@ type ValidateProofResponse struct {
 	Valid bool `json:"valid"`
 }
 
+type Payload interface{}
+
 type AuditTrailCreateResponse struct {
 	AuditTrailID string `json:"auditTrailID"`
 }
@@ -30,7 +32,12 @@ type AuditTrailReadResponse struct {
 type IdentityCreateRequest struct {
 	Doc interface{} `json:"doc"`
 	Type string `json:"type"`
-	Metadata interface{} `json:"metadata"`
+	Metadata MetadataType `json:"metadata"`
+}
+
+type MetadataType struct {
+	stateControllerAddress string `json:"stateControllerAddress"`
+	fundingAddress string `json:"fundingAddress"`
 }
 
 type IdentityCreateResponse struct {

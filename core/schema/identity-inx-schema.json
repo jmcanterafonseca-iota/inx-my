@@ -1,5 +1,5 @@
 {
-    "$id": "https://iotaledger.github.io/ebsi/did-document-schema.json",
+    "$id": "https://iotaledger.github.io/ebsi/identity-inx-schema.json",
     "$schema": "http://json-schema.org/draft-07/schema#",
     "definitions": {
         "uri": {
