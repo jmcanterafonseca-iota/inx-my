@@ -29,10 +29,12 @@ type AuditTrailReadResponse struct {
 
 type IdentityCreateRequest struct {
 	Doc interface{} `json:"doc"`
+	Type string `json:"type"`
+	Metadata interface{} `json:"metadata"`
 }
 
 type IdentityCreateResponse struct {
-	Id interface{} `json:"id"`
+	Id string `json:"id"`
 }
 
 type IdentityReadResponse map[string]any

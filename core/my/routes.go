@@ -82,11 +82,21 @@ func setupRoutes(e *echo.Echo, ledgerService *ledger.LedgerService) {
 			return errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid request, error: %s", err)
 		}
 
+		if req.Type != "DIDCreateRequest" {
+			return errors.WithMessage(httpserver.ErrInvalidParameter, "invalid request type")
+		}
+
 		if req.Doc == nil {
 			return errors.WithMessage(httpserver.ErrInvalidParameter, "invalid request, no DID Doc provided")
 		}
 
-		did, err := createIdentity(c, ledgerService, req.Doc)
+		stateController := req.Metadata.(map[string]any)["stateControllerAddress"]
+		var stateControllerParam string
+		if stateController != nil {
+			stateControllerParam = stateController.(string)
+		}
+
+		did, err := createIdentity(c, ledgerService, req.Doc, stateControllerParam)
 		if err != nil {
 			return err
 		}

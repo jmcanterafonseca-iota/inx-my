@@ -43,11 +43,11 @@ func New(wallet *hdwallet.HDWallet,
 	}
 }
 
-func (l* LedgerService) Bech32HRP() (iotago.NetworkPrefix) {
+func (l *LedgerService) Bech32HRP() iotago.NetworkPrefix {
 	return l.nodeBridge.ProtocolParameters().Bech32HRP
 }
 
-func (l *LedgerService) MintAlias(context context.Context, data []byte) (iotago.AliasID, error) {
+func (l *LedgerService) MintAlias(context context.Context, data []byte, stateController ...string) (iotago.AliasID, error) {
 	var outputToConsume *UTXO
 
 	// Go to the indexer and obtain the first Basic Output that has funds
@@ -75,6 +75,19 @@ func (l *LedgerService) MintAlias(context context.Context, data []byte) (iotago.
 		UnlockTarget: ed25519Addr,
 		InputID:      outputToConsume.OutputID,
 		Input:        outputToConsume.Output,
+	}
+
+	if len(stateController) > 0 && len(stateController[0]) > 0 {
+		_, stateAddr, err := iotago.ParseBech32(stateController[0])
+
+		if err != nil {
+			l.log.Errorf("Invalid state controller address %w", err)
+			return iotago.AliasID{}, err
+		}
+
+		if stateAddr.Type() == iotago.AddressEd25519 {
+			ed25519Addr = stateAddr.(*iotago.Ed25519Address)
+		}
 	}
 
 	// Two outputs have to be defined. The new Alias Output and the remaining funds Output

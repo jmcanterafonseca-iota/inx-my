@@ -158,8 +158,8 @@ func prepareForWriteDID(doc *map[string]any) {
 	}
 }
 
-func createIdentity(c echo.Context, ledgerService *ledger.LedgerService, doc interface{}) (string, error) {
-	if err:= validateDIDDocument(doc); err != nil {
+func createIdentity(c echo.Context, ledgerService *ledger.LedgerService, doc interface{}, stateController ...string) (string, error) {
+	if err := validateDIDDocument(doc); err != nil {
 		CoreComponent.LogErrorf("Error validating DID: %w", err)
 		return "", err
 	}
@@ -189,20 +189,23 @@ func createIdentity(c echo.Context, ledgerService *ledger.LedgerService, doc int
 	headerBytes := make([]byte, headerLen)
 	copy(headerBytes, []byte(magicString))
 	headerBytes[len(magicString)] = didVersion
-	headerBytes[len(magicString) + 1] = didEncoding
+	headerBytes[len(magicString)+1] = didEncoding
 
 	// 2 bytes for the length of the encoded data
-	stateMetadata := make([]byte, headerLen + 2 + len(data))
+	stateMetadata := make([]byte, headerLen+2+len(data))
 	copy(stateMetadata, headerBytes)
 	dataLength := make([]byte, 2)
 	binary.LittleEndian.PutUint16(dataLength, uint16(len(data)))
 	copy(stateMetadata[headerLen:], dataLength)
 
-	copy(stateMetadata[headerLen + 2:], data)
+	copy(stateMetadata[headerLen+2:], data)
 
-	aliasID, err := ledgerService.MintAlias(CoreComponent.Daemon().ContextStopped(), stateMetadata)
+	aliasID, err := ledgerService.MintAlias(CoreComponent.Daemon().ContextStopped(), stateMetadata, stateController[0])
+	if err != nil {
+		return "", err
+	}
 
-	CoreComponent.LogDebugf("New DID %s", "did:iota:" + string(ledgerService.Bech32HRP()) + ":" + aliasID.String())
+	CoreComponent.LogDebugf("New DID %s", "did:iota:"+string(ledgerService.Bech32HRP())+":"+aliasID.String())
 
 	return "did:iota:" + string(ledgerService.Bech32HRP()) + ":" + aliasID.String(), nil
 }
@@ -221,4 +224,3 @@ func validateDIDDocument(doc interface{}) error {
 
 	return nil
 }
-
