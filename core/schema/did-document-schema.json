@@ -121,7 +121,6 @@
         },
         "DID-Document-Input": {
             "type": "object",
-            "minProperties": 1,
             "properties": {
                 "id": {
                     "$ref": "#/definitions/uri"

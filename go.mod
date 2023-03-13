@@ -7,6 +7,8 @@ require (
 	github.com/iotaledger/inx/go v1.0.0-rc.1
 	github.com/iotaledger/iota.go/v3 v3.0.0-rc.1
 	github.com/labstack/echo/v4 v4.10.0
+	github.com/santhosh-tekuri/jsonschema/v5 v5.2.0
+	golang.org/x/exp v0.0.0-20221111204811-129d8d6c17ab
 )
 
 require (

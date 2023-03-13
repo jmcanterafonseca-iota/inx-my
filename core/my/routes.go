@@ -19,11 +19,12 @@ const (
 
 	// ParameterBlockID is used to identify a block by its ID.
 	ParameterAuditTrailID = "AuditTrailID"
-	ParameterDID = "DID"
+	ParameterDID          = "DID"
 
-	RouteReadAuditTrail   = "/audit-trails/:" + ParameterAuditTrailID
-	RouteCreateAuditTrail = "/audit-trails"
-	RouteReadDecentralizedIdentity = "identities/:" + ParameterDID
+	RouteReadAuditTrail            = "/audit-trails/:" + ParameterAuditTrailID
+	RouteCreateAuditTrail          = "/audit-trails"
+	RouteCreateIdentity            = "/identities"
+	RouteReadDecentralizedIdentity = "/identities/:" + ParameterDID
 )
 
 func setupRoutes(e *echo.Echo, ledgerService *ledger.LedgerService) {
@@ -43,7 +44,6 @@ func setupRoutes(e *echo.Echo, ledgerService *ledger.LedgerService) {
 
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
-
 
 	e.POST(RouteCreateAuditTrail, func(c echo.Context) error {
 		req := &AuditTrailCreateRequest{}
@@ -74,6 +74,25 @@ func setupRoutes(e *echo.Echo, ledgerService *ledger.LedgerService) {
 
 		return httpserver.JSONResponse(c, http.StatusOK, resp)
 	})
+
+	e.POST(RouteCreateIdentity, func(c echo.Context) error {
+		req := &IdentityCreateRequest{}
+
+		if err := c.Bind(req); err != nil {
+			return errors.WithMessagef(httpserver.ErrInvalidParameter, "invalid request, error: %s", err)
+		}
+
+		if req.Doc == nil {
+			return errors.WithMessage(httpserver.ErrInvalidParameter, "invalid request, no DID Doc provided")
+		}
+
+		resp, err := createIdentity(c, ledgerService, req.Doc)
+		if err != nil {
+			return err
+		}
+
+		return httpserver.JSONResponse(c, http.StatusOK, resp)
+	})
 }
 
 func parseAuditTrailIDParam(c echo.Context, paramName string) (*iotago.AliasID, error) {
@@ -88,17 +107,17 @@ func parseDIDParam(c echo.Context, ledgerService *ledger.LedgerService, paramNam
 	_, err := url.ParseRequestURI(DID)
 
 	if err != nil {
-		return "", iotago.AliasID{}, errors.WithMessagef(httpserver.ErrInvalidParameter, 
+		return "", iotago.AliasID{}, errors.WithMessagef(httpserver.ErrInvalidParameter,
 			"invalid DID: %s, error: %s", DID, err)
 	}
 
-	if !strings.HasPrefix(DID, "did:iota:" + string(ledgerService.Bech32HRP()) + ":") {
-		return "", iotago.AliasID{}, errors.WithMessagef(httpserver.ErrInvalidParameter, 
+	if !strings.HasPrefix(DID, "did:iota:"+string(ledgerService.Bech32HRP())+":") {
+		return "", iotago.AliasID{}, errors.WithMessagef(httpserver.ErrInvalidParameter,
 			"invalid DID: %s, error: %s", DID, err)
 	}
 
 	aliasIDComponents := strings.Split(DID, ":")
-	aliasIDHex := aliasIDComponents[len(aliasIDComponents) - 1]
+	aliasIDHex := aliasIDComponents[len(aliasIDComponents)-1]
 
 	aliasID, err := parseAliasID(aliasIDHex)
 
@@ -109,12 +128,12 @@ func parseAliasID(aliasIDHex string) (iotago.AliasID, error) {
 	aliasIDBytes, err := iotago.DecodeHex(aliasIDHex)
 
 	if err != nil {
-		return iotago.AliasID{}, errors.WithMessagef(httpserver.ErrInvalidParameter, 
+		return iotago.AliasID{}, errors.WithMessagef(httpserver.ErrInvalidParameter,
 			"invalid Alias ID: %s, error: %s", aliasIDBytes, err)
 	}
 
 	if len(aliasIDBytes) < iotago.AliasIDLength {
-		return iotago.AliasID{}, errors.WithMessagef(httpserver.ErrInvalidParameter, 
+		return iotago.AliasID{}, errors.WithMessagef(httpserver.ErrInvalidParameter,
 			"invalid Trail ID: %s", aliasIDHex)
 	}
 

@@ -47,7 +47,7 @@ func (l* LedgerService) Bech32HRP() (iotago.NetworkPrefix) {
 	return l.nodeBridge.ProtocolParameters().Bech32HRP
 }
 
-func (l *LedgerService) MintAlias(context context.Context, data string) (iotago.AliasID, error) {
+func (l *LedgerService) MintAlias(context context.Context, data []byte) (iotago.AliasID, error) {
 	var outputToConsume *UTXO
 
 	// Go to the indexer and obtain the first Basic Output that has funds
@@ -88,7 +88,7 @@ func (l *LedgerService) MintAlias(context context.Context, data string) (iotago.
 		ImmutableFeatures: iotago.Features{
 			&iotago.IssuerFeature{Address: ed25519Addr},
 		},
-		StateMetadata: []byte(data),
+		StateMetadata: data,
 	}
 
 	outputCost := l.nodeBridge.ProtocolParameters().RentStructure.MinRent(targetAliasOutput)
