@@ -109,6 +109,12 @@ func readIdentity(c echo.Context, ledgerService *ledger.LedgerService, didAlias 
 	json.Unmarshal(didContent, &result)
 
 	parseDIDDocument(&result, did)
+	meta := result["meta"].(map[string]any)
+
+	// Adding the stateController and the governorController
+	conditions, _ := aliasOutput.Conditions.Set()
+	meta["stateControllerAddress"] = conditions.StateControllerAddress().Address.Bech32(ledgerService.Bech32HRP())
+	meta["governorAddress"] = conditions.GovernorAddress().Address.Bech32(ledgerService.Bech32HRP())
 
 	return IdentityReadResponse(result), nil
 }
