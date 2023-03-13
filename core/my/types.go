@@ -36,8 +36,8 @@ type IdentityCreateRequest struct {
 }
 
 type MetadataType struct {
-	stateControllerAddress string `json:"stateControllerAddress"`
-	fundingAddress string `json:"fundingAddress"`
+	StateControllerAddress string `json:"stateControllerAddress"`
+	FundingAddress string `json:"fundingAddress"`
 }
 
 type IdentityCreateResponse struct {
